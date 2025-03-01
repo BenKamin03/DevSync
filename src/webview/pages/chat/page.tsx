@@ -1,5 +1,5 @@
 import Chat, { Message } from "../../components/ui/chat";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { messageHandler } from "@estruyf/vscode/dist/client";
 import { Textarea } from "../../components/ui/textarea";
 import Button from "../../components/ui/button";
@@ -10,6 +10,7 @@ const Page = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [message, setMessage] = useState<string>("");
     const [isFocused, setIsFocused] = useState<boolean>(false);
+    const messagesRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
@@ -18,6 +19,9 @@ const Page = () => {
             if (message && message.command === "MESSAGE") {
                 console.log("message", { ...message.data, timestamp: new Date(message.data.timestamp || "") });
                 setMessages((prev) => [...prev, { ...message.data, timestamp: new Date(message.data.timestamp || "") }]);
+                setTimeout(() => {
+                    messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
+                }, 100);
             }
         };
 
@@ -26,19 +30,24 @@ const Page = () => {
         return () => {
             window.removeEventListener("message", handleMessage);
         };
-    }, []);
+    }, [messagesRef]);
 
     useEffect(() => {
         (messageHandler.request("GET_MESSAGES") as Promise<Message[]>).then((messages: Message[]) => {
-            if (messages) setMessages(messages);
+            if (messages) {
+                setMessages(messages);
+                messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
+            }
         });
-    }, []);
+    }, [messagesRef]);
 
     const handleSendMessage = useCallback(() => {
-        messageHandler.send("SEND_MESSAGE", { message });
+        if (message.trim() === "") return;
+        messageHandler.send("SEND_MESSAGE", { message: message.trim() });
         setMessage("");
-        setMessages((prev) => [...prev, { message, timestamp: new Date(), username: "You", isUser: true }]);
-    }, [message]);
+        setMessages((prev) => [...prev, { message: message.trim(), timestamp: new Date(), username: "You", isUser: true }]);
+        messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
+    }, [message, messagesRef]);
 
     useEffect(() => {
         const handleEnter = (e: KeyboardEvent) => {
@@ -60,10 +69,13 @@ const Page = () => {
 
     return (
         <div className="flex flex-col gap-4 h-full w-full justify-between relative">
-            <button className="absolute top-2 right-0 text-white" onClick={disconnect}>
-                <CloseIcon />
-            </button>
-            <div className="flex flex-col mt-12">
+            <div className="absolute flex justify-end items-start top-2 right-0 w-full h-12 bg-gradient-to-b from-[#181414] to-transparent z-50">
+                <button className="text-white z-50" onClick={disconnect}>
+                    <CloseIcon className="z-50" />
+                </button>
+            </div>
+
+            <div ref={messagesRef} className="flex flex-col pt-8 mt-2 max-h-full overflow-y-auto no-scrollbar">
                 {messages.map((message, index) => (
                     <Chat key={index} {...message} />
                 ))}

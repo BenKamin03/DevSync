@@ -15,6 +15,8 @@ let wsurl = "";
 let ws: WebSocket | null = null;
 let messages: Message[] = [];
 let username = "Anonymous";
+let isFocused = false;
+let unreadMessages = 0;
 
 export function deactivate() {
     if (ws) {
@@ -60,18 +62,42 @@ const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
 
 class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
     private context: vscode.ExtensionContext;
+    private webviewView: vscode.WebviewView | undefined;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
     }
 
     resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken) {
+        this.webviewView = webviewView;
+
         webviewView.webview.options = {
             enableScripts: true,
             retainContextWhenHidden: true,
         } as WebviewOptions;
 
         webviewView.webview.html = getWebviewContent(this.context, webviewView.webview);
+
+        isFocused = true;
+        unreadMessages = 0;
+        this.updateBadge(0);
+        console.log("Webview opened, focus set to true");
+
+        webviewView.onDidChangeVisibility(() => {
+            isFocused = webviewView.visible;
+            if (isFocused) {
+                unreadMessages = 0;
+                this.updateBadge(0);
+                console.log("Webview visible, focus set to true");
+            } else {
+                console.log("Webview hidden, focus set to false");
+            }
+        });
+
+        webviewView.onDidDispose(() => {
+            isFocused = false;
+            console.log("Webview disposed, focus set to false");
+        });
 
         webviewView.webview.onDidReceiveMessage(
             (message) => {
@@ -109,8 +135,6 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                                 requestId,
                                 payload: `WebSocket connected`,
                             } as MessageHandlerData<string>);
-
-                            ws?.send("Hello from the extension!");
                         };
 
                         ws.onerror = (event) => {
@@ -132,6 +156,12 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                                     isUser: false,
                                 },
                             });
+
+                            if (!isFocused) {
+                                unreadMessages++;
+                                console.log("unreadMessages", unreadMessages);
+                                this.updateBadge(unreadMessages);
+                            }
 
                             console.log("messages", messages);
                         };
@@ -162,10 +192,23 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                 } else if (command === "DISCONNECT") {
                     ws?.close();
                     ws = null;
+                    messages = [];
                 }
             },
             undefined,
             this.context.subscriptions
         );
+    }
+
+    private updateBadge(count: number) {
+        console.log("updateBadge", count);
+        vscode.commands.executeCommand("setContext", "myExtension.badgeCount", count);
+
+        if (this.webviewView) {
+            this.webviewView.badge = {
+                tooltip: `${count} unread message${count === 1 ? "" : "s"}`,
+                value: count,
+            };
+        }
     }
 }
