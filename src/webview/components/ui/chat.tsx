@@ -19,7 +19,7 @@ const Chat: React.FC<Message> = memo(({ message, username, timestamp, isUser }) 
             >
                 {!isUser && <div className="font-semibold text-sm mb-1">{username}</div>}
                 <div>{message}</div>
-                <div className="text-xs mt-1 opacity-70">{timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="text-xs mt-1 opacity-70">{new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
             </div>
         </div>
     );

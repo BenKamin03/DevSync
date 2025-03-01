@@ -2,6 +2,9 @@ import Chat, { Message } from "../../components/ui/chat";
 import React, { useState, useEffect, useCallback } from "react";
 import { messageHandler } from "@estruyf/vscode/dist/client";
 import { Textarea } from "../../components/ui/textarea";
+import Button from "../../components/ui/button";
+import CloseIcon from "../../icons/close";
+import { useLocationStore } from "../../stores/location";
 
 const Page = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -32,7 +35,7 @@ const Page = () => {
     }, []);
 
     const handleSendMessage = useCallback(() => {
-        messageHandler.send("MESSAGE", { message });
+        messageHandler.send("SEND_MESSAGE", { message });
         setMessage("");
         setMessages((prev) => [...prev, { message, timestamp: new Date(), username: "You", isUser: true }]);
     }, [message]);
@@ -50,9 +53,17 @@ const Page = () => {
         };
     }, [isFocused, handleSendMessage]);
 
+    const disconnect = useCallback(() => {
+        messageHandler.send("DISCONNECT");
+        useLocationStore.getState().navigate("");
+    }, []);
+
     return (
-        <div className="flex flex-col gap-4 h-full w-full justify-between">
-            <div className="flex flex-col mt-4">
+        <div className="flex flex-col gap-4 h-full w-full justify-between relative">
+            <button className="absolute top-2 right-0 text-white" onClick={disconnect}>
+                <CloseIcon />
+            </button>
+            <div className="flex flex-col mt-12">
                 {messages.map((message, index) => (
                     <Chat key={index} {...message} />
                 ))}

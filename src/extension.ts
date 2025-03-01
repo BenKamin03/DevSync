@@ -4,13 +4,24 @@ import { ExtensionContext, ExtensionMode, Uri, Webview, WebviewOptions } from "v
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
 import WebSocket from "ws";
+import { Message } from "./webview/components/ui/chat";
 
 export function activate(context: vscode.ExtensionContext) {
     const provider = new ReactWebviewViewProvider(context);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider("vscode-react-webview-starter.view", provider));
 }
 
-export function deactivate() {}
+let wsurl = "";
+let ws: WebSocket | null = null;
+let messages: Message[] = [];
+let username = "Anonymous";
+
+export function deactivate() {
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
+}
 
 const getWebviewContent = (context: ExtensionContext, webview: Webview) => {
     const jsFile = "main.bundle.js";
@@ -61,10 +72,6 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
         } as WebviewOptions;
 
         webviewView.webview.html = getWebviewContent(this.context, webviewView.webview);
-
-        let wsurl = "";
-        let ws: WebSocket | null = null;
-        let messages: string[] = [];
 
         webviewView.webview.onDidReceiveMessage(
             (message) => {
@@ -117,18 +124,44 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
 
                         ws.onmessage = (event) => {
                             console.log("WebSocket message received:", event.data);
-                            messages.push(event.data as string);
+                            messages.push(JSON.parse(event.data as string) as Message);
                             webviewView.webview.postMessage({
-                                command,
-                                requestId,
-                                payload: event.data,
-                            } as MessageHandlerData<string>);
+                                command: "MESSAGE",
+                                data: {
+                                    ...JSON.parse(event.data as string),
+                                    isUser: false,
+                                },
+                            });
 
                             console.log("messages", messages);
                         };
                     } catch (error) {
                         console.error("Error creating WebSocket:", error);
                     }
+                } else if (command === "SEND_MESSAGE") {
+                    const message = { message: payload.message, username, timestamp: new Date() };
+                    ws?.send(JSON.stringify(message));
+                    messages.push({ ...message, isUser: true });
+                } else if (command === "GET_MESSAGES") {
+                    webviewView.webview.postMessage({
+                        command,
+                        requestId,
+                        payload: messages,
+                    } as MessageHandlerData<Message[]>);
+                } else if (command === "UPDATE_USER") {
+                    username = payload.username;
+                } else if (command === "CONNECTED") {
+                    console.log("CONNECTED", !!ws);
+                    webviewView.webview.postMessage({
+                        command: "CONNECTED",
+                        requestId,
+                        data: {
+                            connected: !!ws,
+                        },
+                    });
+                } else if (command === "DISCONNECT") {
+                    ws?.close();
+                    ws = null;
                 }
             },
             undefined,

@@ -14,6 +14,25 @@ const Page = () => {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string[]>([]);
 
+    useEffect(() => {
+        const eventListener = (event: MessageEvent) => {
+            if (event.data.command === "CONNECTED") {
+                console.log("CONNECTED", event.data.data.connected);
+                if (event.data.data.connected) {
+                    useLocationStore.getState().navigate("chat");
+                }
+            }
+        };
+
+        window.addEventListener("message", eventListener);
+
+        messageHandler.request("CONNECTED");
+
+        return () => {
+            window.removeEventListener("message", eventListener);
+        };
+    }, []);
+
     const joinSession = useCallback(() => {
         const errors = [];
         if (!username) {
