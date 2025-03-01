@@ -55,7 +55,7 @@ export const App: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
     const params = matchingRoute ? matchRoute(currentLocation, matchingRoute.pattern) : {};
 
     return (
-        <div className="h-screen w-full">
+        <div className="h-screen w-full border-t border-[--vscode-activityBar-dropBorder]">
             <Render {...params} />
         </div>
     );
