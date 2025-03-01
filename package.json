@@ -20,10 +20,6 @@
             {
                 "command": "vscode-react-webview-starter.openWebview",
                 "title": "React Webview: Open webview"
-            },
-            {
-                "command": "vscode-react-webview-starter.clearWorkspaceData",
-                "title": "React Webview: Clear workspace data"
             }
         ],
         "viewsContainers": {
