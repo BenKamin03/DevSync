@@ -68,6 +68,7 @@
         "@types/vscode": "^1.71.0",
         "@types/webpack": "^5.28.1",
         "@types/webpack-dev-server": "^4.7.2",
+        "@types/webpack-env": "^1.18.8",
         "@typescript-eslint/eslint-plugin": "^5.31.0",
         "@typescript-eslint/parser": "^5.31.0",
         "@vscode/test-electron": "^2.1.5",
@@ -87,5 +88,9 @@
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.2.0",
         "webpack-manifest-plugin": "^5.0.0"
+    },
+    "dependencies": {
+        "react-router": "^7.2.0",
+        "react-router-dom": "^7.2.0"
     }
 }
