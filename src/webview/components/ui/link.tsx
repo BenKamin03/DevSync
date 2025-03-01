@@ -8,7 +8,8 @@ const Link = ({ href, children, ...props }: LinkProps) => {
     return (
         <a
             {...props}
-            onClick={() => {
+            onClick={(e) => {
+                e.preventDefault();
                 useLocationStore.getState().navigate(href);
             }}
         >

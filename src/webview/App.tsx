@@ -54,10 +54,6 @@ export const App: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChild
 
     const params = matchingRoute ? matchRoute(currentLocation, matchingRoute.pattern) : {};
 
-    useEffect(() => {
-        document.cookie = `currentLocation=${encodeURIComponent(currentLocation)}; path=/;`;
-    }, [currentLocation]);
-
     return (
         <div className="h-screen w-full">
             <Render {...params} />

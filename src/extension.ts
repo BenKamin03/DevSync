@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { ExtensionContext, ExtensionMode, Uri, Webview, WebviewOptions } from "vscode";
 import { MessageHandlerData } from "@estruyf/vscode";
 import { readFileSync } from "fs";
+import WebSocket from "ws";
 
 export function activate(context: vscode.ExtensionContext) {
     const provider = new ReactWebviewViewProvider(context);
@@ -61,9 +62,9 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = getWebviewContent(this.context, webviewView.webview);
 
-        setTimeout(() => {
-            webviewView.webview.postMessage({ type: "UPDATE_STATE", payload: { count: 5 } });
-        }, 2000);
+        let wsurl = "";
+        let ws: WebSocket | null = null;
+        let messages: string[] = [];
 
         webviewView.webview.onDidReceiveMessage(
             (message) => {
@@ -83,6 +84,51 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                     } as MessageHandlerData<string>);
                 } else if (command === "POST_DATA") {
                     vscode.window.showInformationMessage(`Received data from the webview: ${payload.msg}`);
+                } else if (command === "CONNECT_WS") {
+                    try {
+                        console.log("CONNECT_WS");
+                        console.log(payload);
+                        ws?.close();
+                        wsurl = payload.wsurl;
+                        console.log("wsurl", wsurl);
+                        console.log("Creating WebSocket");
+                        ws = new WebSocket(wsurl);
+                        console.log("WebSocket created");
+
+                        ws.onopen = () => {
+                            console.log("WebSocket connected");
+                            webviewView.webview.postMessage({
+                                command,
+                                requestId,
+                                payload: `WebSocket connected`,
+                            } as MessageHandlerData<string>);
+
+                            ws?.send("Hello from the extension!");
+                        };
+
+                        ws.onerror = (event) => {
+                            console.log("WebSocket error:", event);
+                        };
+
+                        ws.onclose = () => {
+                            console.log("WebSocket closed");
+                            messages = [];
+                        };
+
+                        ws.onmessage = (event) => {
+                            console.log("WebSocket message received:", event.data);
+                            messages.push(event.data as string);
+                            webviewView.webview.postMessage({
+                                command,
+                                requestId,
+                                payload: event.data,
+                            } as MessageHandlerData<string>);
+
+                            console.log("messages", messages);
+                        };
+                    } catch (error) {
+                        console.error("Error creating WebSocket:", error);
+                    }
                 }
             },
             undefined,
