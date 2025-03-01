@@ -11,7 +11,7 @@ const Button = ({ children, variant = "primary", ...props }: ButtonProps) => {
             className={`${
                 variant === "primary"
                     ? "bg-input-background text-input-foreground outline outline-1 outline-input-border"
-                    : "bg-input-foreground text-input-background outline outline-1 outline-input-border"
+                    : "bg-[--vscode-activityBar-dropBorder] text-black outline outline-1 outline-input-border"
             } px-4 py-2 rounded-md active:scale-95 transition-all duration-100 ${props.className}`}
         >
             {children}
