@@ -1,18 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 h1 {
-  font-family: var(--vscode-editor-font-family);
+    font-family: var(--vscode-editor-font-family);
 }
 
 .app {
-  margin: 15px auto;
-  max-width: 80rem;
+    margin: 15px auto;
+    max-width: 80rem;
 }
 
 .app__actions {
-  display: flex;
-  gap: 1rem;
+    display: flex;
+    gap: 1rem;
 }
 
 .app__error {
-  color: var(--vscode-editorError-foreground);
+    color: var(--vscode-editorError-foreground);
 }

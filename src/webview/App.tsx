@@ -1,7 +1,5 @@
 import * as React from "react";
-import { messageHandler } from "@estruyf/vscode/dist/client";
 import "./styles.css";
-import { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
 import { importAll } from "../utilities/general";
 export interface IAppProps {}
