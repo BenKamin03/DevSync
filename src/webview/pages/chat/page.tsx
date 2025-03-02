@@ -10,7 +10,26 @@ const Page = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [message, setMessage] = useState<string>("");
     const [isFocused, setIsFocused] = useState<boolean>(false);
+    const [username, setUsername] = useState<string>("");
     const messagesRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleUsername = (event: MessageEvent) => {
+            const message = event.data;
+            console.log("message", message);
+            if (message && message.command === "GET_USERNAME") {
+                setUsername(message.payload);
+            }
+        };
+
+        window.addEventListener("message", handleUsername);
+
+        messageHandler.request("GET_USERNAME");
+
+        return () => {
+            window.removeEventListener("message", handleUsername);
+        };
+    }, []);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
@@ -45,7 +64,7 @@ const Page = () => {
         if (message.trim() === "") return;
         messageHandler.send("SEND_MESSAGE", { message: message.trim() });
         setMessage("");
-        setMessages((prev) => [...prev, { message: message.trim(), timestamp: new Date(), username: "You", isUser: true }]);
+        setMessages((prev) => [...prev, { message: message.trim(), timestamp: new Date(), username, isUser: true }]);
         messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
     }, [message, messagesRef]);
 

@@ -26,7 +26,7 @@
             "activitybar": [
                 {
                     "id": "vscode-react-webview-starter",
-                    "title": "React Webview",
+                    "title": "DevSync",
                     "icon": "resources/icon.svg"
                 }
             ]

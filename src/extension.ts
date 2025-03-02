@@ -163,6 +163,8 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                                 this.updateBadge(unreadMessages);
                             }
 
+                            this.pushNotification(JSON.parse(event.data as string));
+
                             console.log("messages", messages);
                         };
                     } catch (error) {
@@ -193,6 +195,12 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
                     ws?.close();
                     ws = null;
                     messages = [];
+                } else if (command === "GET_USERNAME") {
+                    webviewView.webview.postMessage({
+                        command,
+                        requestId,
+                        payload: username,
+                    } as MessageHandlerData<string>);
                 }
             },
             undefined,
@@ -206,9 +214,16 @@ class ReactWebviewViewProvider implements vscode.WebviewViewProvider {
 
         if (this.webviewView) {
             this.webviewView.badge = {
-                tooltip: `${count} unread message${count === 1 ? "" : "s"}`,
+                tooltip: ``,
                 value: count,
             };
+        }
+    }
+
+    private pushNotification(message: Message) {
+        if (!isFocused) {
+            const msg = message.message.length > 20 ? message.message.substring(0, 20) + "..." : message.message;
+            vscode.window.showInformationMessage(`${message.username}: ${msg}`);
         }
     }
 }
