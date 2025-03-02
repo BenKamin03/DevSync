@@ -52,7 +52,7 @@ const Page = () => {
 
         const uuid = sha256(room + password);
         messageHandler.send("UPDATE_USER", { username });
-        messageHandler.send("CONNECT_WS", { wsurl: `ws://localhost:8000/room/${uuid}` });
+        messageHandler.send("CONNECT_WS", { wsurl: `ws://18.118.163.75:8080/room/${uuid}` });
 
         useLocationStore.getState().navigate("chat");
     }, [username, room, password]);
