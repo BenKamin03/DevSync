@@ -75,7 +75,7 @@ const Page = () => {
                 </button>
             </div>
 
-            <div ref={messagesRef} className="flex flex-col pt-8 mt-2 max-h-full overflow-y-auto no-scrollbar">
+            <div ref={messagesRef} className="flex flex-col pt-10 pb-4 mt-2 max-h-full overflow-y-auto no-scrollbar">
                 {messages.map((message, index) => (
                     <Chat key={index} {...message} />
                 ))}

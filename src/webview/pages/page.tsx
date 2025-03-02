@@ -1,12 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Input } from "../components/ui/input";
 import Button from "../components/ui/button";
-import Link from "../components/ui/link";
 import { messageHandler } from "@estruyf/vscode/dist/client";
 import sha256 from "crypto-js/sha256";
 import { useLocationStore } from "../stores/location";
-
-import * as vscode from "vscode";
 
 const Page = () => {
     const [username, setUsername] = useState("");
@@ -50,7 +47,7 @@ const Page = () => {
             return;
         }
 
-        const uuid = sha256(room + password);
+        const uuid = sha256(`${room}-${password}`);
         messageHandler.send("UPDATE_USER", { username });
         messageHandler.send("CONNECT_WS", { wsurl: `ws://18.118.163.75:8080/room/${uuid}` });
 
