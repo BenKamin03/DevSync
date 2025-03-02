@@ -1,54 +1,62 @@
-import * as React from 'react';
-import { messageHandler } from '@estruyf/vscode/dist/client';
+import * as React from "react";
 import "./styles.css";
+import { importAll } from "../lib/utils/general";
+import { useLocationStore } from "./stores/location";
+import { useEffect } from "react";
 
 export interface IAppProps {}
 
-export const App: React.FunctionComponent<IAppProps> = ({ }: React.PropsWithChildren<IAppProps>) => {
-  const [message, setMessage] = React.useState<string>("");
-  const [error, setError] = React.useState<string>("");
+interface PageMap {
+    [key: string]: React.FC;
+}
 
-  const sendMessage = () => {
-    messageHandler.send('POST_DATA', { msg: 'Hello from the webview' });
-  };
+interface RouteParams {
+    [key: string]: string;
+}
 
-  const requestData = () => {
-    messageHandler.request<string>('GET_DATA').then((msg) => {
-      setMessage(msg);
-    });
-  };
+function matchRoute(pathname: string, pattern: string): RouteParams | null {
+    const patternParts = pattern.split("/").filter(Boolean);
+    const pathParts = pathname.split("/").filter(Boolean);
 
-  const requestWithErrorData = () => {
-    messageHandler.request<string>('GET_DATA_ERROR')
-    .then((msg) => {
-      setMessage(msg);
-    })
-    .catch((err) => {
-      setError(err);
-    });
-  };
+    if (patternParts.length !== pathParts.length) {
+        return null;
+    }
 
-  return (
-    <div className='app'>
-      <h1>Hello from the React Webview Starter</h1>
+    const params: RouteParams = {};
 
-      <div className='app__actions'>
-        <button onClick={sendMessage}>
-          Send message to extension
-        </button>
+    for (let i = 0; i < patternParts.length; i++) {
+        if (patternParts[i].startsWith(":")) {
+            const paramName = patternParts[i].slice(1);
+            params[paramName] = pathParts[i];
+        } else if (patternParts[i] !== pathParts[i]) {
+            return null;
+        }
+    }
 
-        <button onClick={requestData}>
-          Get data from extension
-        </button>
+    return params;
+}
 
-        <button onClick={requestWithErrorData}>
-          Get data with error
-        </button>
-      </div>
+export const App: React.FunctionComponent<IAppProps> = ({}: React.PropsWithChildren<IAppProps>) => {
+    const pages: PageMap = importAll(require.context("./pages", true, /\.tsx$/));
+    const currentLocation = useLocationStore().currentLocation;
 
-      {message && <p><strong>Message from the extension</strong>: {message}</p>}
+    const routes = Object.entries(pages).map(([key, Component]) => ({
+        pattern: `/${key
+            .replace("page", "")
+            .replace(/\[(.+?)\]/g, ":$1")
+            .replace(/\/+$/, "")}`,
+        Component,
+    }));
 
-      {error && <p className='app__error'><strong>ERROR</strong>: {error}</p>}
-    </div>
-  );
+    const matchingRoute = routes.find((route) => matchRoute(currentLocation, route.pattern));
+
+    const Render = matchingRoute ? matchingRoute.Component : pages["page"];
+
+    const params = matchingRoute ? matchRoute(currentLocation, matchingRoute.pattern) : {};
+
+    return (
+        <div className="h-screen w-full border-t border-[--vscode-activityBar-dropBorder]">
+            <Render {...params} />
+        </div>
+    );
 };
